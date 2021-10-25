@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Before/After Image Slider</title>
+        <style>
+            img { display: none; }
+        </style>
+    </head>
+
+    <body>
+        <!--
+            Add After image as the first to expose it by sliding slider to the right
+            Add After image as the second to expose it by sliding slider to the left
+            Both images need to be the same size
+        -->
+        <img src="test_after.png" id="img1">
+        <img src="test_before.png" id="img2">
+        <!--Canvas needs to be the same size as the images-->
+        <canvas height=432 width=766 id="line"></canvas>
+
+        <script>
+            window.onload = () => {
+                //Getting HTML elements and setting up drawing context
+                const canvas = document.querySelector("#line");
+                const ctx = canvas.getContext("2d");           
+                const img1 = document.querySelector("#img1");
+                const img2 = document.querySelector("#img2");     
+            
+                //Mouse coordinates
+                let mX = 0;
+                let mY = 0;
+
+                //Slider line position. Only need to keep track of X. Also defining width of the line and clickable circle radius
+                let linePos = canvas.width / 2;
+                const lineWidth = 10;
+                const circleRadius = 20;
+
+                //Keep track of whether the mouse is down or not, as well as distance from the circle on the slider
+                let mouseDown = false;
+                let distance = 0;
+
+                //Draw images and slider on initial load or they won't display
+                draw();
+
+                //Event listeners/handlers
+                canvas.addEventListener("mousedown", e => {
+                    if(distance < circleRadius)
+                    {
+                        mouseDown = true;
+                        canvas.style.cursor = "grabbing";
+                    }
+                });
+                canvas.addEventListener("mouseup", e => {
+                    mouseDown = false;
+
+                    if(distance < circleRadius)
+                        canvas.style.cursor = "grab";
+                    else
+                        canvas.style.cursor = "default";
+                }); 
+                canvas.addEventListener("mousemove", e => {
+                    mX = e.offsetX;
+                    mY = e.offsetY;
+
+                    distance = Math.sqrt((mX - linePos) * (mX - linePos) + (mY - canvas.height / 2) * (mY - canvas.height / 2));
+
+                    if(distance < circleRadius)
+                        canvas.style.cursor = "grab";
+                    else
+                        canvas.style.cursor = "default";
+                    
+                    if(mouseDown)
+                    {
+                        linePos = mX;
+                        draw();
+                        canvas.style.cursor = "grabbing";
+                    }
+                });
+
+                function draw()
+                {
+                    //Draw the images
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    //Image 1: source X,Y = (0,0) (top left corner of the image); source width = 0 + x position of the slider; source height = height of the canvas
+                    //Image 2: source X,Y = (x position of the slider,0); source width = width of canvas - x position of slider; source height = height of the canvas
+                    //Destination on canvas = same coordinates as source for respective images
+                    ctx.drawImage(img1,0,0,0 + linePos,canvas.height,0,0,0 + linePos,canvas.height);
+                    ctx.drawImage(img2,linePos,0,canvas.width - linePos,canvas.height,linePos,0,canvas.width - linePos,canvas.height);
+
+                    //Draw the slider
+                    ctx.fillRect(linePos - lineWidth / 2,0,lineWidth,canvas.height);
+
+                    //Clickable circle in the middle
+                    ctx.beginPath();
+                    ctx.arc(linePos,canvas.height/2,circleRadius,0,Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        </script>
+    </body>
+</html>
